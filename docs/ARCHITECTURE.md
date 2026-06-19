@@ -35,8 +35,8 @@ flowchart TB
 
     DEV -.->|PRD不清晰| PM
     DEV -.->|设计不全| SE
-    DEV -.->|Schema/安全不足| DBA
-    DEV -.->|Schema/安全不足| SEC
+    DEV -.->|Schema评审不足| DBA
+    DEV -.->|威胁建模不足| SEC
     DEV -->|代码PR| CO[CodeOwner]
     CO -->|PASS CodeReview| TEST
     CO -.->|FAIL CodeReview| DEV
