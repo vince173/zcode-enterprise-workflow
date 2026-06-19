@@ -255,9 +255,10 @@ flowchart TB
     DBA -->|Schema评审| DEV
     SEC -->|威胁建模| DEV
 
+    DEV -.->|设计不全<br/>打回SE| SE
     DEV -->|代码PR| CO[CodeOwner]
-    CO -->|✅ 通过| TEST
-    CO -.->|❌ 打回| DEV
+    CO -->|✅ CodeReview通过| TEST
+    CO -.->|❌ CodeReview不通过| DEV
 
     TEST -->|✅ 通过| DevOps
     TEST -.->|🐛 Bug| DEV
