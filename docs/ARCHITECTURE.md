@@ -19,8 +19,8 @@ Enterprise Workflow 是一套基于 ZCode Skill 体系的企业级角色分工�
 ### 2.1 工作流（执行顺序 + 反馈回路）
 
 ```mermaid
-flowchart TB
-    START((新迭代)) -->|启动| S[Strategist]
+graph TB
+    START[新迭代] -->|启动| S[Strategist]
     S -->|Vision Canvas| PM
     PM -->|PRD| UX
     PM -.->|无UI变更| SE
@@ -45,7 +45,7 @@ flowchart TB
     TEST -.->|BUG| DEV
 
     DevOps -.->|部署失败/回滚| DEV
-    DevOps -->|RELEASE| DONE((上线))
+    DevOps -->|RELEASE| DONE[上线]
 ```
 
 **跳过决策：**
@@ -71,7 +71,7 @@ flowchart TB
 ### 2.2 依赖关系（角色读取 + 审查）
 
 ```mermaid
-flowchart TB
+graph TB
     subgraph 产出物
         VC[Vision Canvas]
         PRD_OUT[PRD]
