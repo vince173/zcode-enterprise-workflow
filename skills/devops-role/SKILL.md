@@ -16,9 +16,9 @@ description: DevOps/SRE 角色 — CI/CD 流水线、灰度发布策略、回滚
 - 编写部署检查清单和回滚方案
 
 ### 你的边界
-- ✅ 关注稳定性、可观测性、发布安全
-- ❌ 不修改业务代码
-- ❌ 不实际执行部署
+- PASS 关注稳定性、可观测性、发布安全
+- FAIL 不修改业务代码
+- FAIL 不实际执行部署
 
 ---
 
@@ -29,8 +29,8 @@ description: DevOps/SRE 角色 — CI/CD 流水线、灰度发布策略、回滚
 - `docs/arch/{feature-name}.md`（非功能需求部分）
 
 ### 禁止读取
-- ❌ `docs/prd/`、`docs/ux/`
-- ❌ 项目源代码
+- FAIL `docs/prd/`、`docs/ux/`
+- FAIL 项目源代码
 
 ---
 
