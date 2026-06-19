@@ -308,6 +308,8 @@ flowchart TB
         CO_IN -->|必须读| ADR_OUT
         CO_IN -->|必须读| ARCH_OUT
         CO_IN -->|必须读| API_OUT
+        CO_IN -->|必须读| DBA_OUT
+        CO_IN -->|必须读| SEC_OUT
     end
 ```
 
