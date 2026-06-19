@@ -245,20 +245,23 @@ flowchart TB
     START((新迭代)) -->|启动| S[Strategist]
     S -->|Vision Canvas| PM
     PM -->|PRD| UX
-    PM -.->|无UI变更<br/>跳过UX| SE
+    PM -.->|无UI变更| SE
     UX -->|UX流程| SE
     SE -->|有Schema变更| DBA
     SE -->|有新接口/认证| SEC[Security]
-    SE -.->|无数据变更<br/>跳过DBA| DEV
-    SE -.->|无新接口<br/>跳过Security| DEV
+    SE -.->|无数据变更| DEV
+    SE -.->|无新接口| DEV
 
     DBA -->|Schema评审| DEV
     SEC -->|威胁建模| DEV
 
-    DEV -.->|设计不全<br/>打回SE| SE
+    DEV -.->|PRD不清晰| PM
+    DEV -.->|设计不全| SE
+    DEV -.->|Schema/安全不足| DBA
+    DEV -.->|Schema/安全不足| SEC
     DEV -->|代码PR| CO[CodeOwner]
-    CO -->|PASS CodeReview通过| TEST
-    CO -.->|FAIL CodeReview不通过| DEV
+    CO -->|PASS CodeReview| TEST
+    CO -.->|FAIL CodeReview| DEV
 
     TEST -->|PASS| DevOps
     TEST -.->|BUG| DEV
@@ -267,6 +270,17 @@ flowchart TB
     DevOps -->|RELEASE| DONE((上线))
 ```
 
+**反馈回路：**
+
+| 触发者 | 触发条件 | 打回目标 |
+|--------|---------|---------|
+| DEV | PRD 验收标准不可编码 | PM |
+| DEV | ADR/架构/API 不可执行 | SE |
+| DEV | Schema评审/威胁建模不够具体 | DBA / Security |
+| CodeOwner | CodeReview 不通过 | DEV |
+| TEST | 测试发现 Bug | DEV |
+| DevOps | 部署失败/需回滚 | DEV |
+
 | 跳过决策 | 谁判断 | 条件 |
 |----------|--------|------|
 | UX | PM | PRD 中标注「无 UI 变更」 |
@@ -274,42 +288,83 @@ flowchart TB
 | Security | SE | 架构中无新接口/新认证/敏感数据 |
 | DevOps | — | 始终保留 |
 
-### 依赖关系（角色读取关系）
+### 依赖关系（角色读取 + 审查关系）
 
 ```mermaid
 flowchart TB
-    subgraph 上游
-        PM_OUT[PRD]
+    subgraph 产出物
+        VC[Vision Canvas]
+        PRD_OUT[PRD]
         UX_OUT[UX流程]
         ADR_OUT[ADR]
         ARCH_OUT[架构图]
         API_OUT[API契约]
         DBA_OUT[Schema评审]
         SEC_OUT[威胁建模]
+        CODE[代码变更]
+        REVIEW[Review Report]
+        TEST_OUT[测试报告]
     end
 
-    subgraph 中游
-        DEV_IN[DEV] -->|必须读| PM_OUT
-        DEV_IN -->|必须读| ADR_OUT
-        DEV_IN -->|必须读| ARCH_OUT
-        DEV_IN -->|必须读| API_OUT
-        DEV_IN -->|必须读| DBA_OUT
-        DEV_IN -->|必须读| SEC_OUT
+    subgraph Strategist
+        S_IN[Strategist]
     end
 
-    subgraph 下游
-        TEST_IN[TEST] -->|必须读| PM_OUT
-        TEST_IN -->|必须读| API_OUT
-        TEST_IN -->|必须读| UX_OUT
-        TEST_IN -.->|可选参考| DBA_OUT
-        TEST_IN -.->|可选参考| SEC_OUT
+    subgraph PM
+        PM_IN[PM] -->|读| VC
+    end
 
-        CO_IN[CodeOwner] -->|必须读| PM_OUT
-        CO_IN -->|必须读| ADR_OUT
-        CO_IN -->|必须读| ARCH_OUT
-        CO_IN -->|必须读| API_OUT
-        CO_IN -->|必须读| DBA_OUT
-        CO_IN -->|必须读| SEC_OUT
+    subgraph UX
+        UX_IN[UX] -->|读| PRD_OUT
+    end
+
+    subgraph SE
+        SE_IN[SE] -->|读| PRD_OUT
+        SE_IN -->|读| UX_OUT
+    end
+
+    subgraph DBA
+        DBA_IN[DBA] -->|读| ADR_OUT
+        DBA_IN -->|读| ARCH_OUT
+    end
+
+    subgraph Security
+        SEC_IN[Security] -->|读| ADR_OUT
+        SEC_IN -->|读| ARCH_OUT
+        SEC_IN -->|读| API_OUT
+    end
+
+    subgraph DEV
+        DEV_IN[DEV] -->|读| PRD_OUT
+        DEV_IN -->|读| ADR_OUT
+        DEV_IN -->|读| ARCH_OUT
+        DEV_IN -->|读| API_OUT
+        DEV_IN -->|读| DBA_OUT
+        DEV_IN -->|读| SEC_OUT
+    end
+
+    subgraph CodeOwner
+        CO_IN[CodeOwner] -->|读| PRD_OUT
+        CO_IN -->|读| ADR_OUT
+        CO_IN -->|读| ARCH_OUT
+        CO_IN -->|读| API_OUT
+        CO_IN -->|读| DBA_OUT
+        CO_IN -->|读| SEC_OUT
+        CO_IN -->|读| CODE
+    end
+
+    subgraph TEST
+        TEST_IN[TEST] -->|读| PRD_OUT
+        TEST_IN -->|读| API_OUT
+        TEST_IN -->|读| UX_OUT
+        TEST_IN -.->|可选| DBA_OUT
+        TEST_IN -.->|可选| SEC_OUT
+    end
+
+    subgraph DevOps
+        DO_IN[DevOps] -->|读| ADR_OUT
+        DO_IN -->|读| ARCH_OUT
+        DO_IN -->|读| TEST_OUT
     end
 ```
 

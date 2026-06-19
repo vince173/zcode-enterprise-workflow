@@ -23,25 +23,29 @@ flowchart TB
     START((新迭代)) -->|启动| S[Strategist]
     S -->|Vision Canvas| PM
     PM -->|PRD| UX
-    PM -.->|无UI变更<br/>跳过UX| SE
+    PM -.->|无UI变更| SE
     UX -->|UX流程| SE
     SE -->|有Schema变更| DBA
     SE -->|有新接口/认证| SEC[Security]
-    SE -.->|无数据变更<br/>跳过DBA| DEV
-    SE -.->|无新接口<br/>跳过Security| DEV
+    SE -.->|无数据变更| DEV
+    SE -.->|无新接口| DEV
 
     DBA -->|Schema评审| DEV
     SEC -->|威胁建模| DEV
 
+    DEV -.->|PRD不清晰| PM
+    DEV -.->|设计不全| SE
+    DEV -.->|Schema/安全不足| DBA
+    DEV -.->|Schema/安全不足| SEC
     DEV -->|代码PR| CO[CodeOwner]
-    CO -->|✅ 通过| TEST
-    CO -.->|❌ 打回| DEV
+    CO -->|PASS CodeReview| TEST
+    CO -.->|FAIL CodeReview| DEV
 
-    TEST -->|✅ 通过| DevOps
-    TEST -.->|🐛 Bug| DEV
+    TEST -->|PASS| DevOps
+    TEST -.->|BUG| DEV
 
     DevOps -.->|部署失败/回滚| DEV
-    DevOps -->|📦 发布成功| DONE((上线))
+    DevOps -->|RELEASE| DONE((上线))
 ```
 
 **跳过决策：**
@@ -50,76 +54,97 @@ flowchart TB
 |------|-----------|---------|
 | UX | PM | PRD 中无 UI 变更 |
 | DBA | SE | 架构中无 Schema/索引变更 |
-| Security | SE | 架构中无新接口/新认证/无敏感数据 |
-| DevOps | — | 始终保留（至少需要部署方案） |
+| Security | SE | 架构中无新接口/新认证/敏感数据 |
+| DevOps | — | 始终保留 |
 
-**三条反馈回路：**
+**反馈回路：**
 
-| 回路 | 触发 | 流向 |
-|------|------|------|
-| 代码审查打回 | CodeOwner 审批结论为 ❌ | DEV 重新产出 |
-| 测试不通过 | TEST 发现 Bug | DEV 修复 |
-| 部署失败 | DevOps 部署/灰度失败 | DEV 修复 |
+| 触发者 | 触发条件 | 打回目标 |
+|--------|---------|---------|
+| DEV | PRD 验收标准不可编码 | PM |
+| DEV | ADR/架构/API 不可执行 | SE |
+| DEV | Schema评审/威胁建模不够具体 | DBA / Security |
+| CodeOwner | CodeReview 不通过 | DEV |
+| TEST | 测试发现 Bug | DEV |
+| DevOps | 部署失败/需回滚 | DEV |
 
-### 2.2 依赖关系（角色读取关系）
+### 2.2 依赖关系（角色读取 + 审查）
 
 ```mermaid
 flowchart TB
-    subgraph 上游产出
-        PM_OUT[PRD]
+    subgraph 产出物
+        VC[Vision Canvas]
+        PRD_OUT[PRD]
         UX_OUT[UX流程]
         ADR_OUT[ADR]
         ARCH_OUT[架构图]
         API_OUT[API契约]
-        DBA_OUT[Schema评审<br/>索引+约束+风险]
-        SEC_OUT[威胁建模<br/>STRIDE+OWASP+缓解措施]
+        DBA_OUT[Schema评审]
+        SEC_OUT[威胁建模]
+        CODE[代码变更]
+        REVIEW[Review Report]
+        TEST_OUT[测试报告]
+    end
+
+    subgraph Strategist
+        S_IN[Strategist]
+    end
+
+    subgraph PM
+        PM_IN[PM] -->|读| VC
+    end
+
+    subgraph UX
+        UX_IN[UX] -->|读| PRD_OUT
     end
 
     subgraph SE
-        SE_IN[SE] -->|必须读| PM_OUT
-        SE_IN -->|必须读| UX_OUT
+        SE_IN[SE] -->|读| PRD_OUT
+        SE_IN -->|读| UX_OUT
     end
 
     subgraph DBA
-        DBA_IN[DBA] -->|必须读| ADR_OUT
-        DBA_IN -->|必须读| ARCH_OUT
+        DBA_IN[DBA] -->|读| ADR_OUT
+        DBA_IN -->|读| ARCH_OUT
     end
 
     subgraph Security
-        SEC_IN[Security] -->|必须读| ADR_OUT
-        SEC_IN -->|必须读| ARCH_OUT
-        SEC_IN -->|必须读| API_OUT
+        SEC_IN[Security] -->|读| ADR_OUT
+        SEC_IN -->|读| ARCH_OUT
+        SEC_IN -->|读| API_OUT
     end
 
     subgraph DEV
-        DEV_IN[DEV] -->|必须读| PM_OUT
-        DEV_IN -->|必须读| ADR_OUT
-        DEV_IN -->|必须读| ARCH_OUT
-        DEV_IN -->|必须读| API_OUT
-        DEV_IN -->|必须读| DBA_OUT
-        DEV_IN -->|必须读| SEC_OUT
+        DEV_IN[DEV] -->|读| PRD_OUT
+        DEV_IN -->|读| ADR_OUT
+        DEV_IN -->|读| ARCH_OUT
+        DEV_IN -->|读| API_OUT
+        DEV_IN -->|读| DBA_OUT
+        DEV_IN -->|读| SEC_OUT
     end
 
     subgraph CodeOwner
-        CO_IN[CodeOwner] -->|必须读| PM_OUT
-        CO_IN -->|必须读| ADR_OUT
-        CO_IN -->|必须读| ARCH_OUT
-        CO_IN -->|必须读| API_OUT
-        CO_IN -->|必须读| DBA_OUT
-        CO_IN -->|必须读| SEC_OUT
+        CO_IN[CodeOwner] -->|读| PRD_OUT
+        CO_IN -->|读| ADR_OUT
+        CO_IN -->|读| ARCH_OUT
+        CO_IN -->|读| API_OUT
+        CO_IN -->|读| DBA_OUT
+        CO_IN -->|读| SEC_OUT
+        CO_IN -->|读| CODE
     end
 
     subgraph TEST
-        TEST_IN[TEST] -->|必须读| PM_OUT
-        TEST_IN -->|必须读| API_OUT
-        TEST_IN -->|必须读| UX_OUT
-        TEST_IN -.->|可选参考| DBA_OUT
-        TEST_IN -.->|可选参考| SEC_OUT
+        TEST_IN[TEST] -->|读| PRD_OUT
+        TEST_IN -->|读| API_OUT
+        TEST_IN -->|读| UX_OUT
+        TEST_IN -.->|可选| DBA_OUT
+        TEST_IN -.->|可选| SEC_OUT
     end
 
     subgraph DevOps
-        DO_IN[DevOps] -->|必须读| ADR_OUT
-        DO_IN -->|必须读| ARCH_OUT
+        DO_IN[DevOps] -->|读| ADR_OUT
+        DO_IN -->|读| ARCH_OUT
+        DO_IN -->|读| TEST_OUT
     end
 ```
 
@@ -188,11 +213,11 @@ flowchart TB
 这是流程中唯一的自动循环（非标准线性推进）：
 
 ```
-DEV(rc1) → CodeOwner审查 → ❌ 打回
+DEV(rc1) → CodeOwner审查 → FAIL
     ↓
 DEV(rc2) ← Review Report 作为额外输入
     ↓
-CodeOwner再次审查 → ✅ 通过 → TEST
+CodeOwner再次审查 → PASS → TEST
 ```
 
 - 编排器自动完成循环，无需用户手动触发 `/flow retry`
