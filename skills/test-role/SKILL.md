@@ -35,10 +35,14 @@ description: TEST/QA 角色 — 基于 PRD 验收标准 + API 契约 + UX 流程
 - `docs/api/{feature-name}.yaml` — 接口契约（如果涉及 API 测试）
 - `docs/ux/flow-{feature-name}.md` — 用户交互流程（如果涉及 UI 测试）
 
+### 可选参考的输入
+- `docs/dba/schema-review-{feature}.md` — Schema 约束条件（用于设计数据边界测试：NOT NULL、UNIQUE、CHECK）
+- `docs/security/threat-model-{feature}.md` — 缓解措施中可验证的部分（用于设计安全测试用例：鉴权、数据加密）
+
 ### 你禁止读取的
 - ❌ `docs/adr/` — 架构决策（避免实现偏见）
 - ❌ `docs/arch/` — 架构图（避免实现偏见）
-- ❌ `docs/dba/`、`docs/security/`、`docs/deploy/`
+- ❌ `docs/deploy/` — 部署方案
 - ❌ 项目源代码（`src/`、`lib/` 等）
 - ❌ 数据库 Schema
 
